@@ -20,7 +20,20 @@ class GuessTheCardApp:
         
 
         self.next_card_button = tk.Button(self.root, text="Next Card", command=self.reset_game)
+        self.card_name_label = tk.Label(self.root, text="")
+        self.card_name_label.pack(pady=5)
+
+        self.next_card_button = tk.Button(self.root, text="Next Card", command=self.reset_game)
         self.next_card_button.pack(pady=5)
+
+        self.card_name_label = tk.Label(self.root, text="")
+        self.card_name_label.pack(pady=5)
+
+        self.image_type_var = tk.StringVar(self.root)
+        self.image_type_var.set("Full") # default value
+        image_type_options = ["Cropped", "Full"]
+        self.image_type_menu = tk.OptionMenu(self.root, self.image_type_var, *image_type_options, command=self.change_image_type)
+        self.image_type_menu.pack(pady=5)
 
         self.revealed_squares = set()
         self.reveal_job = None
@@ -37,7 +50,10 @@ class GuessTheCardApp:
             random_card = random.choice(card_data)
             self.card_name = random_card['name']
             
-            image_url = random_card['card_images'][0]['image_url'] # Full image URL
+            if self.image_type_var.get() == "Cropped":
+                image_url = random_card['card_images'][0]['image_url_cropped']
+            else:
+                image_url = random_card['card_images'][0]['image_url'] # Full image URL
 
             image_response = requests.get(image_url)
             image_response.raise_for_status()
@@ -90,6 +106,8 @@ class GuessTheCardApp:
         if self.reveal_job:
             self.root.after_cancel(self.reveal_job)
             self.reveal_job = None
+        self.card_name_label.config(text=self.card_name)
+        self.card_name_label.config(text=self.card_name)
 
     
 
@@ -98,7 +116,11 @@ class GuessTheCardApp:
     def reset_game(self):
         self.stop_reveal()
         self.revealed_squares.clear()
+        self.card_name_label.config(text="") # Clear the card name
         self.fetch_random_card()
+
+    def change_image_type(self, selected_type):
+        self.reset_game()
 
 if __name__ == "__main__":
     root = tk.Tk()
