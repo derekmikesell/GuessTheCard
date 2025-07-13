@@ -19,9 +19,19 @@ class GuessTheCardApp:
         self.guess_button = tk.Button(self.root, text="Guess", command=self.check_guess)
         self.guess_button.pack(pady=5)
 
-        self.play_again_button = tk.Button(self.root, text="Play Again", command=self.play_again)
+        self.play_again_button = tk.Button(self.root, text="Play Again", command=self.reset_game)
         self.play_again_button.pack(pady=5)
         self.play_again_button.pack_forget() # Hide until the game is over
+
+        self.image_type_var = tk.StringVar(self.root)
+        self.image_type_var.set("Cropped") # default value
+        image_type_options = ["Cropped", "Full"]
+        self.image_type_menu = tk.OptionMenu(self.root, self.image_type_var, *image_type_options, command=self.change_image_type)
+        self.image_type_menu.pack(pady=5)
+
+        self.next_card_button = tk.Button(self.root, text="Next Card", command=self.reset_game)
+        self.next_card_button.pack(pady=5)
+        self.next_card_button.pack_forget() # Hide until the game is over
 
         self.revealed_squares = set()
         self.reveal_job = None
@@ -35,8 +45,12 @@ class GuessTheCardApp:
             card_data = response.json()["data"]
             random_card = random.choice(card_data)
             self.card_name = random_card['name']
-            image_url = random_card['card_images'][0]['image_url_cropped']
             
+            if self.image_type_var.get() == "Cropped":
+                image_url = random_card['card_images'][0]['image_url_cropped']
+            else:
+                image_url = random_card['card_images'][0]['image_url'] # Full image URL
+
             image_response = requests.get(image_url)
             image_response.raise_for_status()
             self.original_card_image = Image.open(io.BytesIO(image_response.content))
@@ -57,7 +71,7 @@ class GuessTheCardApp:
         self.reveal_image()
 
     def reveal_image(self):
-        square_size = 20
+        square_size = 40 # Increased square size
         width, height = self.original_card_image.size
         
         cols = width // square_size
@@ -97,15 +111,21 @@ class GuessTheCardApp:
             messagebox.showinfo("Correct!", f"You guessed it! The card was {self.card_name}.")
             self.guess_button.pack_forget()
             self.play_again_button.pack()
+            self.next_card_button.pack()
         else:
             messagebox.showerror("Incorrect", "Sorry, that's not the right card. Try again!")
 
-    def play_again(self):
+    def reset_game(self):
+        self.stop_reveal()
         self.guess_entry.delete(0, tk.END)
         self.play_again_button.pack_forget()
+        self.next_card_button.pack_forget()
         self.guess_button.pack()
         self.revealed_squares.clear()
         self.fetch_random_card()
+
+    def change_image_type(self, selected_type):
+        self.reset_game()
 
 if __name__ == "__main__":
     root = tk.Tk()
