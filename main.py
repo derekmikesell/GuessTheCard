@@ -19,9 +19,9 @@ class GuessTheCardApp:
         self.guess_button = tk.Button(self.root, text="Guess", command=self.check_guess)
         self.guess_button.pack(pady=5)
 
-        self.play_again_button = tk.Button(self.root, text="Play Again", command=self.reset_game)
-        self.play_again_button.pack(pady=5)
-        self.play_again_button.pack_forget() # Hide until the game is over
+        self.new_game_button = tk.Button(self.root, text="New Game", command=self.reset_game)
+        self.new_game_button.pack(pady=5)
+        self.new_game_button.pack_forget() # Hide until the game is over
 
         self.image_type_var = tk.StringVar(self.root)
         self.image_type_var.set("Cropped") # default value
@@ -110,7 +110,7 @@ class GuessTheCardApp:
             self.display_image(self.original_card_image)
             messagebox.showinfo("Correct!", f"You guessed it! The card was {self.card_name}.")
             self.guess_button.pack_forget()
-            self.play_again_button.pack()
+            self.new_game_button.pack()
             self.next_card_button.pack()
         else:
             messagebox.showerror("Incorrect", "Sorry, that's not the right card. Try again!")
@@ -118,7 +118,7 @@ class GuessTheCardApp:
     def reset_game(self):
         self.stop_reveal()
         self.guess_entry.delete(0, tk.END)
-        self.play_again_button.pack_forget()
+        self.new_game_button.pack_forget()
         self.next_card_button.pack_forget()
         self.guess_button.pack()
         self.revealed_squares.clear()
