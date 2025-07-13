@@ -13,28 +13,20 @@ class GuessTheCardApp:
         self.card_image_label = tk.Label(self.root)
         self.card_image_label.pack(pady=10)
 
-        self.guess_entry = tk.Entry(self.root, width=50)
-        self.guess_entry.pack(pady=10)
+        
 
-        self.guess_button = tk.Button(self.root, text="Guess", command=self.check_guess)
-        self.guess_button.pack(pady=5)
-
-        self.new_game_button = tk.Button(self.root, text="New Game", command=self.reset_game)
-        self.new_game_button.pack(pady=5)
-        self.new_game_button.pack_forget() # Hide until the game is over
+        
 
         self.image_type_var = tk.StringVar(self.root)
-        self.image_type_var.set("Cropped") # default value
+        self.image_type_var.set("Full") # default value
         image_type_options = ["Cropped", "Full"]
         self.image_type_menu = tk.OptionMenu(self.root, self.image_type_var, *image_type_options, command=self.change_image_type)
         self.image_type_menu.pack(pady=5)
 
         self.next_card_button = tk.Button(self.root, text="Next Card", command=self.reset_game)
         self.next_card_button.pack(pady=5)
-        self.next_card_button.pack_forget() # Hide until the game is over
 
-        self.revealed_squares = set()
-        self.reveal_job = None
+        
         self.fetch_random_card()
 
     def fetch_random_card(self):
@@ -54,9 +46,7 @@ class GuessTheCardApp:
             image_response = requests.get(image_url)
             image_response.raise_for_status()
             self.original_card_image = Image.open(io.BytesIO(image_response.content))
-            self.blacked_out_image = Image.new("RGB", self.original_card_image.size)
-            self.display_image(self.blacked_out_image)
-            self.start_reveal()
+            self.display_image(self.original_card_image)
 
         except requests.exceptions.RequestException as e:
             messagebox.showerror("Error", f"Failed to fetch card data: {e}")
@@ -67,65 +57,12 @@ class GuessTheCardApp:
         self.card_image_label.config(image=photo)
         self.card_image_label.image = photo
 
-    def start_reveal(self):
-        self.reveal_image()
+    
 
-    def reveal_image(self):
-        square_size = 40 # Increased square size
-        width, height = self.original_card_image.size
-        
-        cols = width // square_size
-        rows = height // square_size
-        
-        all_squares = [(r, c) for r in range(rows) for c in range(cols)]
-        unrevealed_squares = [s for s in all_squares if s not in self.revealed_squares]
-
-        if not unrevealed_squares:
-            self.stop_reveal()
-            return
-
-        row, col = random.choice(unrevealed_squares)
-        self.revealed_squares.add((row, col))
-
-        x1 = col * square_size
-        y1 = row * square_size
-        x2 = x1 + square_size
-        y2 = y1 + square_size
-
-        region = self.original_card_image.crop((x1, y1, x2, y2))
-        self.blacked_out_image.paste(region, (x1, y1))
-        self.display_image(self.blacked_out_image)
-
-        self.reveal_job = self.root.after(100, self.reveal_image)
-
-    def stop_reveal(self):
-        if self.reveal_job:
-            self.root.after_cancel(self.reveal_job)
-            self.reveal_job = None
-
-    def check_guess(self):
-        user_guess = self.guess_entry.get()
-        if user_guess.lower() == self.card_name.lower():
-            self.stop_reveal()
-            self.display_image(self.original_card_image)
-            messagebox.showinfo("Correct!", f"You guessed it! The card was {self.card_name}.")
-            self.guess_button.pack_forget()
-            self.new_game_button.pack()
-            self.next_card_button.pack()
-        else:
-            messagebox.showerror("Incorrect", "Sorry, that's not the right card. Try again!")
+    
 
     def reset_game(self):
-        self.stop_reveal()
-        self.guess_entry.delete(0, tk.END)
-        self.new_game_button.pack_forget()
-        self.next_card_button.pack_forget()
-        self.guess_button.pack()
-        self.revealed_squares.clear()
         self.fetch_random_card()
-
-    def change_image_type(self, selected_type):
-        self.reset_game()
 
 if __name__ == "__main__":
     root = tk.Tk()
